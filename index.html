@@ -15,13 +15,14 @@
         }
         h2 {
             text-align: center;
-            color: var(--tg-theme-hint-color, #777);
+            color: var(--tg-theme-text-color, #000);
             margin-bottom: 20px;
         }
         .products-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
+            padding-bottom: 80px;
         }
         .product-card {
             background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
@@ -43,6 +44,10 @@
             font-size: 14px;
             font-weight: bold;
             margin: 8px 0 4px 0;
+            min-height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .product-price {
             color: var(--tg-theme-link-color, #248bcf);
@@ -54,73 +59,79 @@
             background-color: var(--tg-theme-button-color, #248bcf);
             color: var(--tg-theme-button-text-color, #fff);
             border: none;
-            padding: 6px 12px;
+            width: 100%;
+            padding: 8px 12px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
         }
         .quantity-controls {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            background-color: #e4e4e7;
+            border-radius: 6px;
+            padding: 2px;
         }
         .q-btn {
-            background-color: #e4e4e7;
-            color: #000;
+            background-color: var(--tg-theme-button-color, #248bcf);
+            color: var(--tg-theme-button-text-color, #fff);
             border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
             font-weight: bold;
             font-size: 16px;
+        }
+        .q-count {
+            font-weight: bold;
+            color: #000;
         }
     </style>
 </head>
 <body>
 
     <h2>🍕 Меню AXIOMA</h2>
-    
-    <div class="products-grid" id="catalog">
-        </div>
+    <div class="products-grid" id="catalog"></div>
 
 <script>
-    // Инициализируем Telegram Web App API
     const tg = window.Telegram.WebApp;
-    tg.expand(); // Разворачиваем на весь экран
+    tg.expand();
+    tg.ready();
 
-    // Временная заглушка товаров. Позже мы научим бота передавать актуальное меню из БД
-    const mockProducts = [
+    let products = [
         { id: 1, title: "Пицца Маргарита", price: 180, img: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=300" },
         { id: 2, title: "Пицца Пепперони", price: 220, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=300" },
         { id: 3, title: "Комбо Мясной", price: 450, img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300" }
     ];
-
+    
     const cart = {};
     const catalogContainer = document.getElementById('catalog');
 
-    // Рендерим карточки товаров
-    mockProducts.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        card.innerHTML = `
-            <img class="product-img" src="${p.img}" alt="${p.title}">
-            <div class="product-title">${p.title}</div>
-            <div class="product-price">${p.price} грн</div>
-            <div id="btn-container-${p.id}">
-                <button class="counter-btn" onclick="addToCart(${p.id})">В корзину</button>
-            </div>
-        `;
-        catalogContainer.appendChild(card);
-    });
+    function renderCatalog() {
+        catalogContainer.innerHTML = "";
+        products.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <img class="product-img" src="${p.img}">
+                <div class="product-title">${p.title}</div>
+                <div class="product-price">${p.price} грн</div>
+                <div id="btn-container-${p.id}">
+                    <button class="counter-btn" onclick="addToCart(${p.id})">В корзину</button>
+                </div>
+            `;
+            catalogContainer.appendChild(card);
+        });
+    }
 
-    function addToCart(id) {
+    window.addToCart = function(id) {
         cart[id] = 1;
         updateControls(id);
         updateMainButton();
-    }
+    };
 
-    function changeQuantity(id, delta) {
+    window.changeQuantity = function(id, delta) {
         cart[id] = (cart[id] || 0) + delta;
         if (cart[id] <= 0) {
             delete cart[id];
@@ -129,19 +140,38 @@
             updateControls(id);
         }
         updateMainButton();
-    }
+    };
 
     function updateControls(id) {
         document.getElementById(`btn-container-${id}`).innerHTML = `
             <div class="quantity-controls">
                 <button class="q-btn" onclick="changeQuantity(${id}, -1)">-</button>
-                <span>${cart[id]}</span>
+                <span class="q-count">${cart[id]}</span>
                 <button class="q-btn" onclick="changeQuantity(${id}, 1)">+</button>
             </div>
         `;
     }
 
-    // 🚀 ОБНОВЛЕННЫЙ ОБРАБОТЧИК КЛИКА КНОПКИ «ОФОРМИТЬ»
+    function updateMainButton() {
+        let totalItems = 0;
+        let totalPrice = 0;
+
+        for (const id in cart) {
+            const prod = products.find(p => p.id == id);
+            if (prod) {
+                totalItems += cart[id];
+                totalPrice += prod.price * cart[id];
+            }
+        }
+
+        if (totalItems > 0) {
+            tg.MainButton.text = `Оформить заказ: ${totalPrice} грн (${totalItems} шт)`;
+            tg.MainButton.show();
+        } else {
+            tg.MainButton.hide();
+        }
+    }
+
     tg.MainButton.onClick(() => {
         const selectedItems = [];
         let totalPrice = 0;
@@ -164,11 +194,13 @@
             total: totalPrice
         };
 
-        // Отправляем JSON-строку боту
         tg.sendData(JSON.stringify(dataToSend));
-        
-        // Закрываем окно чуть позже, чтобы ТГ успел отправить пакет
         setTimeout(() => {
             tg.close();
-        }, 150);
+        }, 100);
     });
+
+    renderCatalog();
+</script>
+</body>
+</html>
