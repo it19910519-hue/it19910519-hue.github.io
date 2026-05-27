@@ -151,10 +151,10 @@
             if (prod) {
                 totalPrice += prod.price * cart[id];
                 selectedItems.push({
-                    id: prod.id,
-                    title: prod.title,
-                    price: prod.price,
-                    count: cart[id]
+                    id: Number(prod.id),
+                    title: String(prod.title),
+                    price: Number(prod.price),
+                    count: Number(cart[id])
                 });
             }
         }
@@ -164,17 +164,11 @@
             total: totalPrice
         };
 
-        // Проверяем, откуда открыто приложение
-        // Если есть query_id, используем более надежный метод закрытия с передачей данных
-        if (tg.initDataUnsafe && tg.initDataUnsafe.query_id) {
-            tg.sendData(JSON.stringify(dataToSend));
-        } else {
-            // Запасной стопроцентный вариант
-            tg.sendData(JSON.stringify(dataToSend));
-        }
+        // Отправляем JSON-строку боту
+        tg.sendData(JSON.stringify(dataToSend));
         
-        // Даем Telegram команду закрыть окно
+        // Закрываем окно чуть позже, чтобы ТГ успел отправить пакет
         setTimeout(() => {
             tg.close();
-        }, 100);
+        }, 150);
     });
