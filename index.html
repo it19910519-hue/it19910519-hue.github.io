@@ -141,36 +141,40 @@
         `;
     }
 
-    // Управляем главной кнопкой Telegram Web App (внизу экрана)
-    function updateMainButton() {
-        let totalItems = 0;
-        let totalPrice = 0;
+    // 🚀 ОБНОВЛЕННЫЙ ОБРАБОТЧИК КЛИКА КНОПКИ «ОФОРМИТЬ»
+    tg.MainButton.onClick(() => {
         const selectedItems = [];
+        let totalPrice = 0;
 
         for (const id in cart) {
-            const prod = mockProducts.find(p => p.id == id);
-            totalItems += cart[id];
-            totalPrice += prod.price * cart[id];
-            selectedItems.push({ id: prod.id, title: prod.title, count: cart[id] });
+            const prod = products.find(p => p.id == id);
+            if (prod) {
+                totalPrice += prod.price * cart[id];
+                selectedItems.push({
+                    id: prod.id,
+                    title: prod.title,
+                    price: prod.price,
+                    count: cart[id]
+                });
+            }
         }
 
-        if (totalItems > 0) {
-            tg.MainButton.text = `Оформить заказ: ${totalPrice} грн (${totalItems} шт)`;
-            tg.MainButton.show();
+        const dataToSend = {
+            items: selectedItems,
+            total: totalPrice
+        };
+
+        // Проверяем, откуда открыто приложение
+        // Если есть query_id, используем более надежный метод закрытия с передачей данных
+        if (tg.initDataUnsafe && tg.initDataUnsafe.query_id) {
+            tg.sendData(JSON.stringify(dataToSend));
         } else {
-            tg.MainButton.hide();
+            // Запасной стопроцентный вариант
+            tg.sendData(JSON.stringify(dataToSend));
         }
-
-        // При клике на главную кнопку ТГ — отправляем данные боту
-        tg.MainButton.onClick(() => {
-            const dataToSend = {
-                items: selectedItems,
-                total: totalPrice
-            };
-            tg.sendData(JSON.stringify(dataToSend)); // Отправка JSON строки обратно в бот
+        
+        // Даем Telegram команду закрыть окно
+        setTimeout(() => {
             tg.close();
-        });
-    }
-</script>
-</body>
-</html>
+        }, 100);
+    });
