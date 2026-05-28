@@ -99,6 +99,7 @@
     <h2>🍕 Меню AXIOMA</h2>
     
     <div class="products-grid" id="catalog"></div>
+    <button id="checkout-button" class="counter-btn" style="display:none; width:100%; margin-top: 12px;">Оформить заказ</button>
 
 <script>
     const tg = window.Telegram.WebApp;
@@ -108,6 +109,7 @@
     let products = [];
     const cart = {};
     const catalogContainer = document.getElementById('catalog');
+    const checkoutButton = document.getElementById('checkout-button');
 
     // 📥 ПРИЕМ ТОВАРОВ ИЗ БОТА: вытаскиваем переданное меню из URL
     try {
@@ -190,8 +192,11 @@
         if (totalItems > 0) {
             tg.MainButton.text = `Оформить заказ: ${totalPrice} грн (${totalItems} шт)`;
             tg.MainButton.show();
+            checkoutButton.textContent = `Оформить заказ: ${totalPrice} грн (${totalItems} шт)`;
+            checkoutButton.style.display = 'block';
         } else {
             tg.MainButton.hide();
+            checkoutButton.style.display = 'none';
         }
     }
 
@@ -223,7 +228,7 @@
 
         console.log("Sending order to bot:", dataToSend);
         tg.sendData(JSON.stringify(dataToSend));
-        setTimeout(() => tg.close(), 500);
+        setTimeout(() => tg.close(), 1000);
     }
 
     try {
