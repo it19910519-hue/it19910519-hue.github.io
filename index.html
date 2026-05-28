@@ -22,7 +22,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            padding-bottom: 80px; /* Чтобы нижняя кнопка ТГ не закрывала товары */
+            padding-bottom: 80px;
         }
         .product-card {
             background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
@@ -44,7 +44,7 @@
             font-size: 14px;
             font-weight: bold;
             margin: 8px 0 4px 0;
-            min-height: 34px; /* Чтобы карточки были ровными */
+            min-height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -226,7 +226,6 @@
         setTimeout(() => tg.close(), 500);
     }
 
-    // 🚀 Обработчики кликa по главной кнопке Telegram
     try {
         tg.MainButton.onClick(sendOrderToBot);
     } catch (e) {
