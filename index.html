@@ -6,244 +6,95 @@
     <title>AXIOMA Shop</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
-            margin: 0;
-            padding: 15px;
-        }
-        h2 {
-            text-align: center;
-            color: var(--tg-theme-text-color, #000);
-            margin-bottom: 20px;
-        }
-        .products-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            padding-bottom: 80px;
-        }
-        .product-card {
-            background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
-            border-radius: 12px;
-            padding: 10px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .product-img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        .product-title {
-            font-size: 14px;
-            font-weight: bold;
-            margin: 8px 0 4px 0;
-            min-height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .product-price {
-            color: var(--tg-theme-link-color, #248bcf);
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        .counter-btn {
-            background-color: var(--tg-theme-button-color, #248bcf);
-            color: var(--tg-theme-button-text-color, #fff);
-            border: none;
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
-        .counter-btn:active {
-            opacity: 0.8;
-        }
-        .quantity-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #e4e4e7;
-            border-radius: 6px;
-            padding: 2px;
-        }
-        .q-btn {
-            background-color: var(--tg-theme-button-color, #248bcf);
-            color: var(--tg-theme-button-text-color, #fff);
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .q-count {
-            font-weight: bold;
-            color: #000;
-        }
+        body { font-family: sans-serif; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); margin: 0; padding: 15px; }
+        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-bottom: 80px; }
+        .product-card { background-color: var(--tg-theme-secondary-bg-color, #f4f4f5); border-radius: 12px; padding: 10px; text-align: center; }
+        .product-img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; }
+        .product-title { font-size: 14px; font-weight: bold; margin: 8px 0; }
+        .product-price { color: var(--tg-theme-link-color, #248bcf); font-weight: bold; margin-bottom: 10px; }
+        .counter-btn { background-color: var(--tg-theme-button-color, #248bcf); color: var(--tg-theme-button-text-color, #fff); border: none; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; }
+        .quantity-controls { display: flex; justify-content: space-between; align-items: center; background-color: #e4e4e7; border-radius: 6px; padding: 2px; }
+        .q-btn { background-color: var(--tg-theme-button-color, #248bcf); color: var(--tg-theme-button-text-color, #fff); border: none; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <h2>🍕 Меню AXIOMA</h2>
-    
     <div class="products-grid" id="catalog"></div>
-    <button id="checkout-button" class="counter-btn" style="display:none; width:100%; margin-top: 12px;">Оформить заказ</button>
+    <button id="checkout-button" class="counter-btn" style="display:none; position: fixed; bottom: 10px; left: 10px; right: 10px; padding: 15px;">Оформить заказ</button>
 
 <script>
     const tg = window.Telegram.WebApp;
-    tg.expand(); // Разворачиваем витрину на весь экран
+    tg.expand();
     tg.ready();
 
-    let products = [];
+    let products = [
+        { id: 1, title: "Пицца Маргарита", price: 180, img: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=300" },
+        { id: 2, title: "Пицца Пепперони", price: 220, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=300" },
+        { id: 3, title: "Комбо Мясной", price: 450, img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300" }
+    ];
     const cart = {};
-    const catalogContainer = document.getElementById('catalog');
-    const checkoutButton = document.getElementById('checkout-button');
 
-    // 📥 ПРИЕМ ТОВАРОВ ИЗ БОТА: вытаскиваем переданное меню из URL
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const menuParam = urlParams.get('menu');
-        if (menuParam) {
-            products = JSON.parse(decodeURIComponent(menuParam));
-        }
-    } catch (e) {
-        console.error("Ошибка разбора меню:", e);
-    }
-
-    // Если бот ничего не передал (например, открыли просто в браузере) — включаем дефолтные товары
-    if (!products || products.length === 0) {
-        products = [
-            { id: 1, title: "Пицца Маргарита", price: 180, img: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=300" },
-            { id: 2, title: "Пицца Пепперони", price: 220, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=300" },
-            { id: 3, title: "Комбо Мясной", price: 450, img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300" }
-        ];
-    }
-
-    // Рисуем карточки на экране
     function renderCatalog() {
-        catalogContainer.innerHTML = "";
+        const container = document.getElementById('catalog');
         products.forEach(p => {
             const card = document.createElement('div');
             card.className = 'product-card';
             card.innerHTML = `
-                <img class="product-img" src="${p.img}" alt="${p.title}">
+                <img class="product-img" src="${p.img}">
                 <div class="product-title">${p.title}</div>
                 <div class="product-price">${p.price} грн</div>
-                <div id="btn-container-${p.id}">
-                    <button class="counter-btn" onclick="addToCart(${p.id})">В корзину</button>
-                </div>
+                <div id="btn-${p.id}"><button class="counter-btn" onclick="addToCart(${p.id})">В корзину</button></div>
             `;
-            catalogContainer.appendChild(card);
+            container.appendChild(card);
         });
     }
 
-    window.addToCart = function(id) {
-        cart[id] = 1;
-        updateControls(id);
-        updateMainButton();
-    };
-
-    window.changeQuantity = function(id, delta) {
+    window.addToCart = (id) => { cart[id] = 1; updateControls(id); updateUI(); };
+    window.changeQuantity = (id, delta) => {
         cart[id] = (cart[id] || 0) + delta;
         if (cart[id] <= 0) {
             delete cart[id];
-            document.getElementById(`btn-container-${id}`).innerHTML = `<button class="counter-btn" onclick="addToCart(${id})">В корзину</button>`;
-        } else {
-            updateControls(id);
-        }
-        updateMainButton();
+            document.getElementById(`btn-${id}`).innerHTML = `<button class="counter-btn" onclick="addToCart(${id})">В корзину</button>`;
+        } else { updateControls(id); }
+        updateUI();
     };
 
     function updateControls(id) {
-        document.getElementById(`btn-container-${id}`).innerHTML = `
+        document.getElementById(`btn-${id}`).innerHTML = `
             <div class="quantity-controls">
                 <button class="q-btn" onclick="changeQuantity(${id}, -1)">-</button>
-                <span class="q-count">${cart[id]}</span>
+                <span style="font-weight:bold">${cart[id]}</span>
                 <button class="q-btn" onclick="changeQuantity(${id}, 1)">+</button>
-            </div>
-        `;
+            </div>`;
     }
 
-    // Обновление состояния нижней Главной Кнопки Telegram
-    function updateMainButton() {
-        let totalItems = 0;
-        let totalPrice = 0;
-
+    function updateUI() {
+        let totalItems = 0, totalPrice = 0;
         for (const id in cart) {
-            const prod = products.find(p => p.id == id);
-            if (prod) {
-                totalItems += cart[id];
-                totalPrice += prod.price * cart[id];
-            }
+            const p = products.find(prod => prod.id == id);
+            totalItems += cart[id];
+            totalPrice += p.price * cart[id];
         }
-
+        const btn = document.getElementById('checkout-button');
         if (totalItems > 0) {
-            tg.MainButton.text = `Оформить заказ: ${totalPrice} грн (${totalItems} шт)`;
-            tg.MainButton.show();
-            checkoutButton.textContent = `Оформить заказ: ${totalPrice} грн (${totalItems} шт)`;
-            checkoutButton.style.display = 'block';
-        } else {
-            tg.MainButton.hide();
-            checkoutButton.style.display = 'none';
-        }
+            btn.textContent = `Оформить заказ: ${totalPrice} грн (${totalItems} шт)`;
+            btn.style.display = 'block';
+        } else { btn.style.display = 'none'; }
     }
 
-    function sendOrderToBot() {
-        const selectedItems = [];
-        let totalPrice = 0;
-
-        for (const id in cart) {
-            const prod = products.find(p => p.id == id);
-            if (prod) {
-                totalPrice += prod.price * cart[id];
-                selectedItems.push({
-                    id: prod.id,
-                    title: prod.title,
-                    price: prod.price,
-                    count: cart[id]
-                });
-            }
-        }
-
-        if (selectedItems.length === 0) {
-            return;
-        }
-
-        const dataToSend = {
-            items: selectedItems,
-            total: totalPrice
+    // Обработчик нажатия на кнопку
+    document.getElementById('checkout-button').addEventListener('click', () => {
+        const order = { 
+            items: Object.keys(cart).map(id => ({ ...products.find(p => p.id == id), count: cart[id] })), 
+            total: 0 
         };
+        order.total = order.items.reduce((sum, item) => sum + (item.price * item.count), 0);
+        
+        tg.sendData(JSON.stringify(order));
+        tg.close();
+    });
 
-        console.log("Sending order to bot:", dataToSend);
-        tg.sendData(JSON.stringify(dataToSend));
-        setTimeout(() => tg.close(), 1000);
-    }
-
-    try {
-        tg.MainButton.onClick(sendOrderToBot);
-    } catch (e) {
-        console.warn("MainButton.onClick не поддерживается", e);
-    }
-
-    try {
-        tg.onEvent('mainButtonClicked', sendOrderToBot);
-    } catch (e) {
-        console.warn("onEvent('mainButtonClicked') не поддерживается", e);
-    }
-
-    // Запуск рендера при старте страницы
     renderCatalog();
 </script>
 </body>
