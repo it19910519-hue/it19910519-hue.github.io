@@ -1,111 +1,94 @@
 import logging
 import json
 from aiogram import Router, F
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, ReplyKeyboardRemove
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.fsm.context import FSMContext
 
+# Импорты из других файлов проекта
 from database.db_manager import add_user, create_order, get_user_role
-from handlers.admin_panel import is_admin
+from .keyboards import get_main_keyboard
 
-# Инициализация
 logger = logging.getLogger(__name__)
 user_router = Router()
+
 WEB_APP_BASE_URL = "https://it19910519-hue.github.io/"
 
-# =========================================================
-# КЛАВИАТУРЫ
-# =========================================================
-
-def get_admin_start_keyboard():
-    builder = ReplyKeyboardBuilder()
-    builder.button(text="👑 Админ Панель")
-    return builder.as_markup(resize_keyboard=True)
-
-def get_chef_start_keyboard():
-    builder = ReplyKeyboardBuilder()
-    builder.button(text="🧑‍🍳 Панель Повара")
-    return builder.as_markup(resize_keyboard=True)
-
-def get_courier_start_keyboard():
-    builder = ReplyKeyboardBuilder()
-    builder.button(text="🛵 Панель Курьера")
-    return builder.as_markup(resize_keyboard=True)
-
-# =========================================================
-# ОБРАБОТЧИКИ
-# =========================================================
-
+# --- START ---
 @user_router.message(CommandStart())
-async def cmd_start(message: Message):
-    user_id = message.from_user.id
-    username = message.from_user.username or message.from_user.full_name
+async def cmd_start(message: Message, state: FSMContext):
+    # Очищаем любое состояние при старте
+    await state.clear()
     
-    # Регистрация пользователя
-    try:
-        await add_user(user_id=user_id, username=username, role="user")
-    except Exception as e:
-        logger.error(f"Ошибка регистрации пользователя: {e}")
-
-    # Определяем клавиатуру
-    if is_admin(user_id):
-        user_reply_markup = get_admin_start_keyboard()
-    else:
-        role = await get_user_role(user_id)
-        if role == "chef":
-            user_reply_markup = get_chef_start_keyboard()
-        elif role == "courier":
-            user_reply_markup = get_courier_start_keyboard()
-        else:
-            user_reply_markup = ReplyKeyboardRemove()
-
-    # Инлайн-кнопка для WebApp
-    inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(
-                text="🍕 Открыть интерактивное меню",
-                web_app=WebAppInfo(url=WEB_APP_BASE_URL)
-            )
-        ]
+    # Добавляем пользователя в базу
+    await add_user(
+        user_id=message.from_user.id, 
+        username=message.from_user.username or "User", 
+        role="user"
+    )
+    
+    # Проверяем роль для показа кнопок управления
+    role = await get_user_role(message.from_user.id)
+    keyboard = get_main_keyboard() if role in ["admin", "chef", "courier"] else None
+    
+    inline_kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🍕 Открыть меню AXIOMA", web_app=WebAppInfo(url=WEB_APP_BASE_URL))]
     ])
     
     await message.answer(
-        f"👋 <b>Привет, {username}!</b>\n\nДобро пожаловать в <b>AXIOMA</b>.",
-        parse_mode=ParseMode.HTML,
-        reply_markup=user_reply_markup
+        f"👋 Привет, {message.from_user.full_name}! Добро пожаловать в AXIOMA.", 
+        reply_markup=inline_kb
     )
-    await message.answer("🛒 Нажми кнопку ниже для оформления заказа:", reply_markup=inline_keyboard)
+    
+    if keyboard:
+        await message.answer("🛠 Для вас доступны панели управления:", reply_markup=keyboard)
 
-# ОБРАБОТЧИК ЗАКАЗОВ ИЗ MINI APP
+# --- WEB APP DATA ---
 @user_router.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
-    data = message.web_app_data.data
-    logger.info(f"Получены данные из Web App: {data}")
+    # 1. Проверка на наличие данных
+    if not message.web_app_data or not message.web_app_data.data:
+        logger.error(f"Пользователь {message.from_user.id} отправил пустые web_app_data")
+        await message.answer("⚠️ Ошибка: данные заказа не получены. Попробуйте еще раз.")
+        return
+
+    raw_data = message.web_app_data.data
+    logger.info(f"Получены данные от Web App для пользователя {message.from_user.id}: {raw_data}")
     
     try:
-        order_data = json.loads(data) 
-        items_list = order_data.get('items', [])
-        total_price = order_data.get('total', 0)
+        data = json.loads(raw_data)
+        items = data.get('items', [])
+        total = data.get('total', 0)
         
-        items_summary = ", ".join([f"{item['title']} x{item['count']}" for item in items_list])
+        if not items:
+            await message.answer("🛒 Ваша корзина пуста. Добавьте товары перед заказом.")
+            return
+
+        items_str = "\n".join([f"• {i['title']} x{i['count']}" for i in items])
         
+        # Создание заказа в БД
         order_id = await create_order(
             user_id=message.from_user.id,
-            customer_name=message.from_user.full_name or "Клиент",
-            address="Адрес не указан",
-            items=items_summary,
-            total_price=float(total_price),
+            customer_name=message.from_user.full_name,
+            address="Не указан",
+            items=items_str,
+            total_price=float(total),
             comment="Web App заказ",
-            phone=message.from_user.username or "Нет связи"
+            phone=message.from_user.username or "Нет"
         )
         
-        await message.answer(
-            f"🎉 <b>Заказ №{order_id} успешно оформлен!</b>\n\n"
-            f"🍕 <b>Состав:</b> {items_summary}\n"
-            f"💰 <b>К оплате:</b> {total_price} грн",
-            parse_mode=ParseMode.HTML
-        )
+        if order_id:
+            await message.answer(
+                f"🎉 **Заказ №{order_id} успешно принят!**\n\n"
+                f"🍕 **Состав:**\n{items_str}\n\n"
+                f"💰 **К оплате:** {total} грн",
+                parse_mode=ParseMode.MARKDOWN
+            )
+            logger.info(f"Заказ {order_id} успешно записан в БД.")
+        else:
+            raise Exception("Ошибка записи в базу данных")
+        
     except Exception as e:
-        logger.error(f"Ошибка оформления заказа: {e}")
-        await message.answer("⚠️ Произошла ошибка при обработке заказа. Попробуйте еще раз.")
+        logger.error(f"Критическая ошибка при создании заказа: {e}")
+        await message.answer("❌ Произошла ошибка при оформлении заказа. Попробуйте позже.")
