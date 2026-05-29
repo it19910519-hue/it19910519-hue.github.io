@@ -1,490 +1,115 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AXIOMA Shop</title>
-
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <style>
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-
-            font-family: Arial, sans-serif;
-
-            background: #0f172a;
-
-            color: white;
-
+            font-family: Arial;
+            margin: 0;
             padding: 15px;
         }
 
-        h2 {
-
-            margin-bottom: 20px;
-
-            font-size: 26px;
-        }
-
-        .products-grid {
-
-            display: grid;
-
-            grid-template-columns: 1fr 1fr;
-
-            gap: 15px;
-
-            padding-bottom: 100px;
-        }
-
-        .product-card {
-
-            background: #1e293b;
-
-            border-radius: 14px;
-
-            overflow: hidden;
-
+        .product {
             padding: 10px;
-
-            text-align: center;
-
-            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-        }
-
-        .product-img {
-
-            width: 100%;
-
-            height: 130px;
-
-            object-fit: cover;
-
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
             border-radius: 10px;
-        }
-
-        .product-title {
-
-            margin-top: 10px;
-
-            font-size: 16px;
-
-            font-weight: bold;
-        }
-
-        .product-price {
-
-            color: #60a5fa;
-
-            margin: 8px 0;
-
-            font-size: 20px;
-
-            font-weight: bold;
         }
 
         .btn {
-
-            width: 100%;
-
+            background: #2ea6ff;
+            color: white;
             border: none;
-
-            border-radius: 10px;
-
             padding: 10px;
-
-            background: #60a5fa;
-
-            color: white;
-
-            font-size: 16px;
-
-            cursor: pointer;
-
-            transition: 0.2s;
-        }
-
-        .btn:active {
-
-            transform: scale(0.97);
-        }
-
-        .counter {
-
-            display: flex;
-
-            justify-content: center;
-
-            align-items: center;
-
-            gap: 10px;
-
-            margin-top: 10px;
-        }
-
-        .q-btn {
-
-            width: 32px;
-
-            height: 32px;
-
-            border: none;
-
+            width: 100%;
             border-radius: 8px;
-
-            background: #60a5fa;
-
-            color: white;
-
-            font-size: 18px;
-
-            cursor: pointer;
-        }
-
-        .count {
-
-            font-size: 18px;
-
-            min-width: 20px;
         }
 
         #checkout-btn {
-
             position: fixed;
-
             bottom: 10px;
-
             left: 10px;
-
             right: 10px;
-
-            border: none;
-
-            border-radius: 12px;
-
-            padding: 16px;
-
-            background: #60a5fa;
-
-            color: white;
-
-            font-size: 18px;
-
-            font-weight: bold;
-
-            cursor: pointer;
-
-            display: none;
-
-            z-index: 100;
         }
-
     </style>
 </head>
 
 <body>
 
-<h2>🍕 Меню AXIOMA</h2>
+<h2>🍕 AXIOMA MENU</h2>
 
-<div class="products-grid" id="catalog"></div>
+<div id="catalog"></div>
 
-<button id="checkout-btn">
+<button id="checkout-btn" class="btn" style="display:none;">
     Оформить заказ
 </button>
 
 <script>
-
-    // Telegram WebApp
-    const tg = window.Telegram.WebApp;
-
-    tg.expand();
-    tg.ready();
-
-    // =========================
-    // ТОВАРЫ
-    // =========================
-
-    const products = [
-
-        {
-            id: 1,
-            title: "Пицца Маргарита",
-            price: 180,
-            img: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=300"
-        },
-
-        {
-            id: 2,
-            title: "Пицца Пепперони",
-            price: 220,
-            img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=300"
-        },
-
-        {
-            id: 3,
-            title: "Комбо Мясной",
-            price: 450,
-            img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300"
-        }
-    ];
-
-    // =========================
-    // КОРЗИНА
-    // =========================
-
-    let cart = {};
-
-    // =========================
-    // РЕНДЕР
-    // =========================
-
-    function renderProducts() {
-
-        const catalog = document.getElementById('catalog');
-
-        catalog.innerHTML = products.map(product => `
-
-            <div class="product-card">
-
-                <img
-                    class="product-img"
-                    src="${product.img}"
-                >
-
-                <div class="product-title">
-                    ${product.title}
-                </div>
-
-                <div class="product-price">
-                    ${product.price} грн
-                </div>
-
-                <div id="controls-${product.id}">
-
-                    <button
-                        class="btn"
-                        onclick="updateCart(${product.id}, 1)"
-                    >
-                        В корзину
-                    </button>
-
-                </div>
-
-            </div>
-
-        `).join('');
-    }
-
-    // =========================
-    // ОБНОВЛЕНИЕ КОРЗИНЫ
-    // =========================
-
-    window.updateCart = (id, delta) => {
-
-        cart[id] = (cart[id] || 0) + delta;
-
-        if (cart[id] <= 0) {
-            delete cart[id];
-        }
-
-        // Обновляем карточку
-        const controls = document.getElementById(
-            `controls-${id}`
-        );
-
-        if (!cart[id]) {
-
-            controls.innerHTML = `
-
-                <button
-                    class="btn"
-                    onclick="updateCart(${id}, 1)"
-                >
-                    В корзину
-                </button>
-
-            `;
-
-        } else {
-
-            controls.innerHTML = `
-
-                <div class="counter">
-
-                    <button
-                        class="q-btn"
-                        onclick="updateCart(${id}, -1)"
-                    >
-                        -
-                    </button>
-
-                    <div class="count">
-                        ${cart[id]}
-                    </div>
-
-                    <button
-                        class="q-btn"
-                        onclick="updateCart(${id}, 1)"
-                    >
-                        +
-                    </button>
-
-                </div>
-
-            `;
-        }
-
-        updateCheckoutButton();
-    };
-
-    // =========================
-    // ОБНОВЛЕНИЕ КНОПКИ
-    // =========================
-
-    function updateCheckoutButton() {
-
-        const btn = document.getElementById(
-            'checkout-btn'
-        );
-
-        const order = Object.keys(cart).map(id => {
-
-            const product = products.find(
-                p => p.id == id
-            );
-
-            return {
-                ...product,
-                count: cart[id]
-            };
-        });
-
-        const total = order.reduce(
-            (sum, item) =>
-                sum + item.price * item.count,
-            0
-        );
-
-        const totalCount = order.reduce(
-            (sum, item) =>
-                sum + item.count,
-            0
-        );
-
-        if (totalCount > 0) {
-
-            btn.style.display = "block";
-
-            btn.innerText =
-                `Оформить заказ: ${total} грн (${totalCount} шт)`;
-
-        } else {
-
-            btn.style.display = "none";
-        }
-    }
-
-    // =========================
-    // ОФОРМЛЕНИЕ ЗАКАЗА
-    // =========================
-
-    document.getElementById(
-        'checkout-btn'
-    ).onclick = () => {
-
-        if (Object.keys(cart).length === 0) {
-
-            tg.showAlert(
-                "Корзина пустая"
-            );
-
-            return;
-        }
-
-        // Собираем заказ
-        const order = Object.keys(cart).map(id => {
-
-            const product = products.find(
-                p => p.id == id
-            );
-
-            return {
-                id: product.id,
-                title: product.title,
-                price: product.price,
-                count: cart[id]
-            };
-        });
-
-        // Сумма
-        const total = order.reduce(
-            (sum, item) =>
-                sum + item.price * item.count,
-            0
-        );
-
-        // Данные заказа
-        const data = {
-
-            items: order,
-
-            total: total
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+const products = [
+    {id: 1, title: "Пицца", price: 200},
+    {id: 2, title: "Бургер", price: 150}
+];
+
+let cart = {};
+
+function render() {
+    const c = document.getElementById("catalog");
+    c.innerHTML = products.map(p => `
+        <div class="product">
+            <b>${p.title}</b><br>
+            ${p.price} грн<br><br>
+            <button class="btn" onclick="add(${p.id})">В корзину</button>
+        </div>
+    `).join("");
+}
+
+function add(id) {
+    cart[id] = (cart[id] || 0) + 1;
+
+    const total = Object.keys(cart).reduce((s, i) => {
+        const p = products.find(x => x.id == i);
+        return s + p.price * cart[i];
+    }, 0);
+
+    const btn = document.getElementById("checkout-btn");
+    btn.style.display = "block";
+    btn.innerText = "Оформить на " + total + " грн";
+}
+
+document.getElementById("checkout-btn").onclick = () => {
+
+    const order = Object.keys(cart).map(id => {
+        const p = products.find(x => x.id == id);
+        return {
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            count: cart[id]
         };
+    });
 
-        try {
+    const total = order.reduce((s, i) => s + i.price * i.count, 0);
 
-            // Отправляем данные боту
-            tg.sendData(
-                JSON.stringify(data)
-            );
+    tg.sendData(JSON.stringify({
+        items: order,
+        total: total
+    }));
 
-            const btn = document.getElementById(
-                'checkout-btn'
-            );
+    document.getElementById("checkout-btn").innerText = "Отправлено!";
+    document.getElementById("checkout-btn").disabled = true;
 
-            // Сообщение успеха
-            btn.innerText =
-                "✅ Заказ отправлен";
+    setTimeout(() => tg.close(), 1200);
+};
 
-            btn.style.background =
-                "#22c55e";
-
-            btn.disabled = true;
-
-            // Закрываем окно
-            setTimeout(() => {
-
-                tg.close();
-
-            }, 1500);
-
-        } catch (error) {
-
-            console.error(error);
-
-            tg.showAlert(
-                "Ошибка отправки заказа"
-            );
-        }
-    };
-
-    // Запуск
-    renderProducts();
-
+render();
 </script>
 
 </body>
 </html>
-```
