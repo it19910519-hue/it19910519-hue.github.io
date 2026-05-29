@@ -1,43 +1,182 @@
 import asyncio
 import logging
 import sys
-from aiogram import Bot, Dispatcher
-from config import config
-# Импортируем готовый "пакет" всех роутеров
-from handlers import all_routers 
-from database.db_manager import init_db, add_user
 
-# Настройка логирования
+from aiogram import Bot
+from aiogram import Dispatcher
+from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
+
+from config import config
+
+# Роутеры
+from handlers import all_routers
+
+# База данных
+from database.db_manager import (
+    init_db,
+    add_user
+)
+
+# =========================================
+# ЛОГИРОВАНИЕ
+# =========================================
+
 logging.basicConfig(
-    level=logging.INFO, 
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+    format=(
+        "%(asctime)s | "
+        "%(levelname)s | "
+        "%(name)s | "
+        "%(message)s"
+    ),
     stream=sys.stdout
 )
 
+logger = logging.getLogger(__name__)
+
+# =========================================
+# MAIN
+# =========================================
+
 async def main():
-    # 1. Инициализация БД
-    await init_db()
-    
-    # 2. Регистрация администратора
-    if config.admin_id:
-        await add_user(user_id=config.admin_id, username="SuperAdmin", role="admin")
-        logging.info(f"Администратор {config.admin_id} успешно зарегистрирован/обновлен.")
-    
-    # 3. Настройка бота и диспетчера
-    bot = Bot(token=config.bot_token.get_secret_value())
+
+    logger.info("Запуск AXIOMA BOT...")
+
+    # =====================================
+    # ИНИЦИАЛИЗАЦИЯ БД
+    # =====================================
+
+    try:
+
+        await init_db()
+
+        logger.info(
+            "База данных успешно подключена"
+        )
+
+    except Exception as e:
+
+        logger.error(
+            f"Ошибка БД: {e}"
+        )
+
+        return
+
+    # =====================================
+    # РЕГИСТРАЦИЯ ADMIN
+    # =====================================
+
+    try:
+
+        if config.admin_id:
+
+            await add_user(
+                user_id=config.admin_id,
+                username="SuperAdmin",
+                role=config.admin_role
+            )
+
+            logger.info(
+                f"Администратор "
+                f"{config.admin_id} "
+                f"зарегистрирован"
+            )
+
+    except Exception as e:
+
+        logger.error(
+            f"Ошибка регистрации admin: {e}"
+        )
+
+    # =====================================
+    # BOT
+    # =====================================
+
+    bot = Bot(
+
+        token=config.bot_token.get_secret_value(),
+
+        default=DefaultBotProperties(
+            parse_mode=ParseMode.HTML
+        )
+    )
+
+    # =====================================
+    # DISPATCHER
+    # =====================================
+
     dp = Dispatcher()
-    
-    # 4. Подключение всех роутеров одной командой
+
+    # =====================================
+    # РОУТЕРЫ
+    # =====================================
+
     dp.include_router(all_routers)
-    logging.info("Все роутеры (user, admin, chef, courier, stats) успешно подключены.")
-    
-    # 5. Запуск
-    logging.info("Запуск бота AXIOMA...")
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+
+    logger.info(
+        "Роутеры успешно подключены"
+    )
+
+    # =====================================
+    # УДАЛЕНИЕ WEBHOOK
+    # =====================================
+
+    await bot.delete_webhook(
+        drop_pending_updates=True
+    )
+
+    logger.info(
+        "Webhook удален"
+    )
+
+    # =====================================
+    # СТАРТ БОТА
+    # =====================================
+
+    logger.info(
+        "AXIOMA BOT успешно запущен 🚀"
+    )
+
+    try:
+
+        await dp.start_polling(
+            bot,
+            skip_updates=True
+        )
+
+    finally:
+
+        await bot.session.close()
+
+        logger.info(
+            "Сессия бота закрыта"
+        )
+
+# =========================================
+# START
+# =========================================
 
 if __name__ == "__main__":
+
     try:
+
         asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        logging.info("Бот остановлен пользователем.")
+
+    except KeyboardInterrupt:
+
+        logger.warning(
+            "Бот остановлен вручную"
+        )
+
+    except SystemExit:
+
+        logger.warning(
+            "SystemExit"
+        )
+
+    except Exception as e:
+
+        logger.error(
+            f"Критическая ошибка: {e}"
+        )
