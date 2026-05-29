@@ -4,29 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AXIOMA Shop</title>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <style>
         body {
-            font-family: Arial;
+            font-family: -apple-system, BlinkMacSystemFont, Arial;
             margin: 0;
             padding: 15px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000);
         }
 
-        .product {
-            padding: 10px;
-            border: 1px solid #ddd;
+        h2 {
             margin-bottom: 10px;
-            border-radius: 10px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding-bottom: 80px;
+        }
+
+        .product-card {
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .product-img {
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .product-title {
+            font-size: 14px;
+            margin: 8px 0;
+            font-weight: bold;
         }
 
         .btn {
-            background: #2ea6ff;
-            color: white;
-            border: none;
-            padding: 10px;
             width: 100%;
-            border-radius: 8px;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            cursor: pointer;
+        }
+
+        .q-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 6px;
+            background: var(--tg-theme-button-color, #0088cc);
+            color: white;
         }
 
         #checkout-btn {
@@ -34,6 +71,8 @@
             bottom: 10px;
             left: 10px;
             right: 10px;
+            display: none;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -42,74 +81,11 @@
 
 <h2>🍕 AXIOMA MENU</h2>
 
-<div id="catalog"></div>
+<div class="products-grid" id="catalog"></div>
 
-<button id="checkout-btn" class="btn" style="display:none;">
-    Оформить заказ
-</button>
+<button id="checkout-btn" class="btn">Оформить заказ</button>
 
-<script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-const products = [
-    {id: 1, title: "Пицца", price: 200},
-    {id: 2, title: "Бургер", price: 150}
-];
-
-let cart = {};
-
-function render() {
-    const c = document.getElementById("catalog");
-    c.innerHTML = products.map(p => `
-        <div class="product">
-            <b>${p.title}</b><br>
-            ${p.price} грн<br><br>
-            <button class="btn" onclick="add(${p.id})">В корзину</button>
-        </div>
-    `).join("");
-}
-
-function add(id) {
-    cart[id] = (cart[id] || 0) + 1;
-
-    const total = Object.keys(cart).reduce((s, i) => {
-        const p = products.find(x => x.id == i);
-        return s + p.price * cart[i];
-    }, 0);
-
-    const btn = document.getElementById("checkout-btn");
-    btn.style.display = "block";
-    btn.innerText = "Оформить на " + total + " грн";
-}
-
-document.getElementById("checkout-btn").onclick = () => {
-
-    const order = Object.keys(cart).map(id => {
-        const p = products.find(x => x.id == id);
-        return {
-            id: p.id,
-            title: p.title,
-            price: p.price,
-            count: cart[id]
-        };
-    });
-
-    const total = order.reduce((s, i) => s + i.price * i.count, 0);
-
-    tg.sendData(JSON.stringify({
-        items: order,
-        total: total
-    }));
-
-    document.getElementById("checkout-btn").innerText = "Отправлено!";
-    document.getElementById("checkout-btn").disabled = true;
-
-    setTimeout(() => tg.close(), 1200);
-};
-
-render();
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
