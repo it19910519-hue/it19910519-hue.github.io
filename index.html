@@ -1,1 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный Дашборд</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --success-color: #4ade80;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 30px;
+        }
+
+        h1 { margin: 0; font-size: 24px; color: var(--accent-color); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+        }
+
+        .status-online { color: var(--success-color); }
+        
+        .btn {
+            background-color: var(--accent-color);
+            color: #0f172a;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover { opacity: 0.9; }
+
+        input {
+            width: calc(100% - 20px);
+            padding: 8px 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background-color: #0f172a;
+            color: white;
+        }
+
+        .link-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed #334155;
+        }
+
+        a { color: var(--accent-color); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1><i class="fa-solid asleep fa-terminal"></i> HQ_Dashboard</h1>
+        <div id="time"></div>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <h2><i class="fa-solid fa-server"></i> Статус Сервисов</h2>
+            <div class="link-item">
+                <span>AXIOMA-09 Bot</span>
+                <span class="status-online"><i class="fa-solid fa-circle"></i> Online</span>
+            </div>
+            <div class="link-item">
+                <span>Local Test Server</span>
+                <span class="status-online"><i class="fa-solid fa-circle"></i> Online</span>
+            </div>
+            <div class="link-item">
+                <span>Courier API App</span>
+                <span style="color: #94a3b8;"><i class="fa-solid fa-circle"></i> Idle</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-dumbbell"></i> Цель: 70 кг</h2>
+            <label>Текущий вес (кг):</label>
+            <input type="number" id="currentWeight" value="65" step="0.1">
+            <button class="btn" onclick="updateProgress()">Обновить прогресс</button>
+            <div style="margin-top: 15px; height: 150px;">
+                <canvas id="weightChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-code"></i> Инструменты & Проекты</h2>
+            <div class="link-item">
+                <a href="https://github.com" target="_blank">Мой GitHub профиль</a>
+                <i class="fa-brands fa-github"></i>
+            </div>
+            <div class="link-item">
+                <span>Python Scripts Env</span>
+                <code>v3.10 / venv</code>
+            </div>
+            <div class="link-item">
+                <span>Minecraft Server IP</span>
+                <code>localhost:25565</code>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Обновление времени
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('time').innerText = now.toLocaleTimeString('ru-RU');
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Настройка графика
+    const ctx = document.getElementById('weightChart').getContext('2d');
+    let weightChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Старт', 'Текущий', 'Цель'],
+            datasets: [{
+                label: 'Вес',
+                data: [64, 65, 70],
+                borderColor: '#38bdf8',
+                backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                borderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { min: 60, max: 75, ticks: { color: '#94a3b8' } },
+                x: { ticks: { color: '#94a3b8' } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    function updateProgress() {
+        let current = parseFloat(document.getElementById('currentWeight').value);
+        if(!isNaN(current)) {
+            weightChart.data.datasets[0].data[1] = current;
+            weightChart.update();
+        }
+    }
+</script>
+</body>
+</html>
