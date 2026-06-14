@@ -3,197 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный Дашборд</title>
+    <title>ROOT@CORE:~#</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --accent-color: #38bdf8;
-            --success-color: #4ade80;
-        }
-
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: #0a0e14;
+            color: #00ff66;
+            font-family: 'Courier New', Courier, monospace;
             margin: 0;
             padding: 20px;
+            font-size: 14px;
         }
 
-        .container {
-            max-width: 1200px;
+        .terminal-window {
+            max-width: 1100px;
             margin: 0 auto;
+            border: 1px solid #00ff66;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.15);
+            background: #0d131a;
         }
 
-        header {
+        .terminal-header {
+            background: #161f29;
+            padding: 10px;
+            border-bottom: 1px solid #00ff66;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #334155;
-            margin-bottom: 30px;
+            color: #fff;
         }
 
-        h1 { margin: 0; font-size: 24px; color: var(--accent-color); }
+        .controls span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .close { background: #ff5f56; }
+        .minimize { background: #ffbd2e; }
+        .maximize { background: #27c93f; }
 
-        .grid {
+        .content-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        .card h2 {
-            margin-top: 0;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 10px;
+        @media (max-width: 768px) {
+            .content-grid { grid-template-columns: 1fr; }
         }
 
-        .status-online { color: var(--success-color); }
-        
-        .btn {
-            background-color: var(--accent-color);
-            color: #0f172a;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
+        .section {
+            border: 1px dashed #005522;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .section-title {
+            color: #fff;
             font-weight: bold;
-            width: 100%;
-            margin-top: 10px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #005522;
+            padding-bottom: 5px;
         }
 
-        .btn:hover { opacity: 0.9; }
-
-        input {
-            width: calc(100% - 20px);
-            padding: 8px 10px;
-            margin: 8px 0;
-            border-radius: 6px;
-            border: 1px solid #475569;
-            background-color: #0f172a;
-            color: white;
-        }
-
-        .link-item {
+        .status-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px dashed #334155;
+            margin-bottom: 8px;
+            padding: 4px;
+        }
+        .status-row:hover { background: rgba(0, 255, 102, 0.05); }
+
+        .active { color: #00ff66; font-weight: bold; }
+        .standby { color: #ffaa00; }
+
+        /* Консоль логов */
+        .log-console {
+            background: #000;
+            border: 1px solid #003311;
+            padding: 10px;
+            height: 120px;
+            overflow-y: auto;
+            color: #88ffaa;
+            font-size: 12px;
         }
 
-        a { color: var(--accent-color); text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        /* Инпуты и кнопки в стиле терминала */
+        input, textarea {
+            background: #000;
+            border: 1px solid #00ff66;
+            color: #00ff66;
+            padding: 6px 10px;
+            font-family: monospace;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        input:focus, textarea:focus { outline: none; background: #050b05; }
+
+        .btn-cli {
+            background: transparent;
+            border: 1px solid #00ff66;
+            color: #00ff66;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: monospace;
+            text-transform: uppercase;
+        }
+        .btn-cli:hover { background: #00ff66; color: #000; font-weight: bold; }
+
+        a { color: #00bfff; text-decoration: none; }
+        a:hover { text-decoration: underline; color: #00ff66; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1><i class="fa-solid asleep fa-terminal"></i> HQ_Dashboard</h1>
-        <div id="time"></div>
-    </header>
+<div class="terminal-window">
+    <div class="terminal-header">
+        <div class="controls">
+            <span class="close"></span>
+            <span class="minimize"></span>
+            <span class="maximize"></span>
+        </div>
+        <div>session: root@env_core (online)</div>
+        <div id="clock">00:00:00</div>
+    </div>
 
-    <div class="grid">
-        <div class="card">
-            <h2><i class="fa-solid fa-server"></i> Статус Сервисов</h2>
-            <div class="link-item">
-                <span>AXIOMA-09 Bot</span>
-                <span class="status-online"><i class="fa-solid fa-circle"></i> Online</span>
+    <div class="content-grid">
+        <!-- Левая колонка: Процессы и Скрипты -->
+        <div class="section">
+            <div class="section-title">>_ PROCESS_MONITOR</div>
+            <div class="status-row">
+                <span>[M] AXIOMA-09_bot.py</span>
+                <span class="active">[RUNNING]</span>
             </div>
-            <div class="link-item">
-                <span>Local Test Server</span>
-                <span class="status-online"><i class="fa-solid fa-circle"></i> Online</span>
+            <div class="status-row">
+                <span>[M] local_test_server</span>
+                <span class="active">[ONLINE]</span>
             </div>
-            <div class="link-item">
-                <span>Courier API App</span>
-                <span style="color: #94a3b8;"><i class="fa-solid fa-circle"></i> Idle</span>
+            <div class="status-row">
+                <span>[M] courier_bid_app</span>
+                <span class="standby">[STAGE_DEV]</span>
+            </div>
+            
+            <div style="margin-top: 20px;" class="section-title">>_ SYSTEM_LOGS</div>
+            <div class="log-console" id="logBox">
+                [LOG] 18:20:01 - AXIOMA-09: venv initialized successfully.<br>
+                [LOG] 18:20:05 - Async DB connection established.<br>
+                [LOG] 18:21:44 - Webhook listener listening on port 8080...
             </div>
         </div>
 
-        <div class="card">
-            <h2><i class="fa-solid fa-dumbbell"></i> Цель: 70 кг</h2>
-            <label>Текущий вес (кг):</label>
-            <input type="number" id="currentWeight" value="65" step="0.1">
-            <button class="btn" onclick="updateProgress()">Обновить прогресс</button>
-            <div style="margin-top: 15px; height: 150px;">
-                <canvas id="weightChart"></canvas>
+        <!-- Правая колонка: Заметки и Конфиги -->
+        <div class="section">
+            <div class="section-title">>_ QUICK_NOTES / COMMANDS</div>
+            <textarea id="notesArea" rows="5" placeholder="Сюда можно временно вставлять куски кода, команды Git или мысли по проектам..."></textarea>
+            <button class="btn-cli" onclick="saveNotes()">Сохранить локально</button>
+            
+            <div style="margin-top: 20px;" class="section-title">>_ TARGET_METRICS</div>
+            <div class="status-row">
+                <span>Текущая фаза тренировок:</span>
+                <span style="color: #fff;">Масс-набор</span>
             </div>
-        </div>
-
-        <div class="card">
-            <h2><i class="fa-solid fa-code"></i> Инструменты & Проекты</h2>
-            <div class="link-item">
-                <a href="https://github.com" target="_blank">Мой GitHub профиль</a>
-                <i class="fa-brands fa-github"></i>
+            <div class="status-row">
+                <span>Целевой вес:</span>
+                <span style="color: #fff;">70.00 kg</span>
             </div>
-            <div class="link-item">
-                <span>Python Scripts Env</span>
-                <code>v3.10 / venv</code>
-            </div>
-            <div class="link-item">
-                <span>Minecraft Server IP</span>
-                <code>localhost:25565</code>
+            <div class="status-row">
+                <span>Стек разработки:</span>
+                <span>Python 3.10+ / Asyncio</span>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Обновление времени
-    function updateTime() {
-        const now = new Date();
-        document.getElementById('time').innerText = now.toLocaleTimeString('ru-RU');
+    // Время
+    function updateClock() {
+        const d = new Date();
+        document.getElementById('clock').innerText = d.toLocaleTimeString('ru-RU');
     }
-    setInterval(updateTime, 1000);
-    updateTime();
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    // Настройка графика
-    const ctx = document.getElementById('weightChart').getContext('2d');
-    let weightChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Старт', 'Текущий', 'Цель'],
-            datasets: [{
-                label: 'Вес',
-                data: [64, 65, 70],
-                borderColor: '#38bdf8',
-                backgroundColor: 'rgba(56, 189, 248, 0.2)',
-                borderWidth: 2,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { min: 60, max: 75, ticks: { color: '#94a3b8' } },
-                x: { ticks: { color: '#94a3b8' } }
-            },
-            plugins: { legend: { display: false } }
+    // Сохранение заметок в браузере
+    window.onload = function() {
+        if(localStorage.getItem('cli_notes')) {
+            document.getElementById('notesArea').value = localStorage.getItem('cli_notes');
         }
-    });
-
-    function updateProgress() {
-        let current = parseFloat(document.getElementById('currentWeight').value);
-        if(!isNaN(current)) {
-            weightChart.data.datasets[0].data[1] = current;
-            weightChart.update();
-        }
+    }
+    function saveNotes() {
+        const text = document.getElementById('notesArea').value;
+        localStorage.setItem('cli_notes', text);
+        
+        // Добавляем запись в лог консоли
+        const logBox = document.getElementById('logBox');
+        const timeStr = new Date().toLocaleTimeString('ru-RU');
+        logBox.innerHTML += `<br>[SYS] ${timeStr} - Заметки успешно сохранены в LocalStorage.`;
+        logBox.scrollTop = logBox.scrollHeight;
     }
 </script>
 </body>
