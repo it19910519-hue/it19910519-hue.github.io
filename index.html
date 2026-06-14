@@ -3,85 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIVE_CORE_PANEL_v5.0</title>
+    <title>LIVE_CORE_PANEL_v5.5</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root {
-            --bg: #06070d;
-            --panel: #0b0c16;
-            --border: #1b1d36;
-            --accent: #a855f7; 
-            --cyan: #06b6d4;   
-            --text: #e2e8f0;
-            --muted: #475569;
-            --success: #10b981;
+            --bg: #06070d; --panel: #0b0c16; --border: #1b1d36;
+            --accent: #a855f7; --cyan: #06b6d4; --text: #e2e8f0;
+            --muted: #475569; --success: #10b981;
         }
 
         * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .wrapper { max-width: 1200px; margin: 0 auto; }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 25px;
+        
+        /* Стили для экрана блокировки */
+        #lock-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050508; z-index: 9999; display: flex;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .lock-box {
+            background: var(--panel); border: 1px solid var(--border);
+            padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%;
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.1);
         }
 
-        .title {
-            font-size: 16px;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--cyan), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .wrapper { max-width: 1200px; margin: 0 auto; display: none; } /* Скрыт по умолчанию */
 
+        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border); margin-bottom: 25px; }
+        .title { font-size: 16px; font-weight: 700; background: linear-gradient(90deg, var(--cyan), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
         .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
         .panel-title { font-size: 13px; text-transform: uppercase; font-weight: 700; color: var(--cyan); margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px; }
-        
         .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
-        .data-label { color: #94a3b8; }
-        .data-value { font-weight: 500; color: #fff; }
+        .data-label { color: #94a3b8; } .data-value { font-weight: 500; color: #fff; }
 
-        input, select {
-            background: #131524;
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            width: 100%;
-            font-size: 13px;
-        }
+        input, select { background: #131524; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; margin-bottom: 10px; width: 100%; font-size: 13px; }
         input:focus { outline: none; border-color: var(--cyan); }
-
-        .btn {
-            background: linear-gradient(90deg, var(--cyan), var(--accent));
-            color: #000; border: none; padding: 12px; border-radius: 6px;
-            font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 12px;
-            transition: all 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
+        .btn { background: linear-gradient(90deg, var(--cyan), var(--accent)); color: #000; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 12px; transition: all 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn:hover { opacity: 0.9; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); }
-
-        .pulse-dot {
-            width: 8px; height: 8px; background: var(--success); border-radius: 50%;
-            display: inline-block; box-shadow: 0 0 8px var(--success);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
+        .pulse-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
     </style>
 </head>
 <body>
 
-<div class="wrapper">
+<div id="lock-screen">
+    <div class="lock-box">
+        <div class="panel-title" style="color: var(--accent); justify-content: center; margin-bottom: 20px;">
+            <i class="fa-solid fa-shield-halved"></i> ACCESS_RESTRICTED
+        </div>
+        <input type="password" id="passwordInput" placeholder="Введите ключ доступа..." onkeydown="if(event.key==='Enter') checkPassword()">
+        <button class="btn" onclick="checkPassword()"><i class="fa-solid fa-key"></i> ДЕКОДИРОВАТЬ</button>
+        <div id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 10px; display: none;">Ключ неверен. Доступ заблокирован.</div>
+    </div>
+</div>
+
+<div class="wrapper" id="main-content">
     <header>
         <div class="title">// MISSION_CONTROL_LIVE //</div>
         <div style="font-size: 12px; color: #94a3b8;" id="clock">Синхронизация...</div>
@@ -90,9 +69,8 @@
     <div class="grid">
         <div class="panel">
             <div>
-                <div class="panel-title"><i class="fa-solid fa-car-sidebar"></i> Auto_Crawler / Поиск объявлений</div>
+                <div class="panel-title"><i class="fa-solid fa-car"></i> Auto_Crawler / Поиск объявлений</div>
                 <input type="text" id="carQuery" placeholder="Например: Subaru Legacy 2007">
-                
                 <select id="searchPlatform">
                     <option value="all">Искать по всем автосайтам Украины</option>
                     <option value="autoria">Только на Auto.ria</option>
@@ -100,26 +78,15 @@
                     <option value="rst">Только на RST</option>
                 </select>
             </div>
-            <button class="btn" onclick="executeAutoSearch()">
-                <i class="fa-solid fa-magnifying-glass"></i> Запустить глобальный поиск
-            </button>
+            <button class="btn" onclick="executeAutoSearch()"><i class="fa-solid fa-magnifying-glass"></i> Запустить поиск</button>
         </div>
 
         <div class="panel">
             <div>
                 <div class="panel-title"><i class="fa-solid fa-cloud-sun"></i> Weather_Meteo / Odesa</div>
-                <div class="data-row">
-                    <span class="data-label">Температура:</span>
-                    <span class="data-value" id="weather-temp">Загрузка...</span>
-                </div>
-                <div class="data-row">
-                    <span class="data-label">Статус:</span>
-                    <span class="data-value" id="weather-desc">Синхронизация</span>
-                </div>
-                <div class="data-row">
-                    <span class="data-label">Ветер:</span>
-                    <span class="data-value" id="weather-wind">-</span>
-                </div>
+                <div class="data-row"><span class="data-label">Температура:</span><span class="data-value" id="weather-temp">Загрузка...</span></div>
+                <div class="data-row"><span class="data-label">Статус:</span><span class="data-value" id="weather-desc">Синхронизация</span></div>
+                <div class="data-row"><span class="data-label">Ветер:</span><span class="data-value" id="weather-wind">-</span></div>
             </div>
             <div style="font-size: 10px; color: var(--muted); margin-top: 15px;">Гео-координаты зафиксированы</div>
         </div>
@@ -127,56 +94,56 @@
         <div class="panel" style="background: linear-gradient(135deg, #0b0c16 0%, #0f112a 100%);">
             <div>
                 <div class="panel-title" style="color: #24a1de;"><i class="fa-brands fa-telegram"></i> Telegram_Link</div>
-                <p style="font-size: 12px; color: #94a3b8; line-height: 1.6; margin-top: 0;">
-                    Панель сопряжения с вашим ботом. Используйте для быстрого перехода в интерфейс управления скриптами.
-                </p>
+                <p style="font-size: 12px; color: #94a3b8; line-height: 1.6; margin-top: 0;">Панель сопряжения с вашим ботом.</p>
                 <div class="data-row" style="border: none; margin-bottom: 15px;">
                     <span class="data-label">Статус соединения:</span>
-                    <span class="data-value" style="color: var(--success); display: flex; align-items: center; gap: 6px;">
-                        <span class="pulse-dot"></span> READY
-                    </span>
+                    <span class="data-value" style="color: var(--success); display: flex; align-items: center; gap: 6px;"><span class="pulse-dot"></span> READY</span>
                 </div>
             </div>
             <a href="https://t.me/YOUR_BOT_USERNAME?start=hub_site" target="_blank" style="text-decoration: none;">
-                <button class="btn" style="background: #24a1de; color: #fff;">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть бота
-                </button>
+                <button class="btn" style="background: #24a1de; color: #fff;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть бота</button>
             </a>
         </div>
     </div>
 </div>
 
 <script>
-    // 1. Живые часы
-    setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('ru-RU') + ' // SYS_OK';
-    }, 1000);
+    // ХЭШ ВАШЕГО ПАРОЛЯ. Сейчас здесь зашит хэш от "1234"
+    const CORRECT_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
 
-    // 2. Логика умного поиска машин
+    function checkPassword() {
+        const input = document.getElementById('passwordInput').value;
+        // Превращаем введенный текст в SHA-256 хэш
+        const inputHash = CryptoJS.SHA256(input).toString();
+
+        if (inputHash === CORRECT_HASH) {
+            // Если хэши совпали - убираем экран блокировки и показываем сайт
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            fetchWeather(); // Загружаем погоду только после успешного входа
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+            document.getElementById('passwordInput').value = '';
+        }
+    }
+
+    // Часы
+    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ru-RU') + ' // SYS_OK'; }, 1000);
+
+    // Поиск машин
     function executeAutoSearch() {
         const query = document.getElementById('carQuery').value.trim();
-        if (!query) return alert('Введите марку автомобиля или запрос!');
-
+        if (!query) return alert('Введите запрос!');
         const platform = document.getElementById('searchPlatform').value;
         let searchUrl = '';
-
-        // Хак с оператором site: для точечного сбора объявлений без мусора
-        if (platform === 'autoria') {
-            searchUrl = `https://www.google.com/search?q=site:auto.ria.com++${encodeURIComponent(query)}`;
-        } else if (platform === 'olx') {
-            searchUrl = `https://www.google.com/search?q=site:olx.ua/d/uk/transport/legkovye-avtomobili/++${encodeURIComponent(query)}`;
-        } else if (platform === 'rst') {
-            searchUrl = `https://www.google.com/search?q=site:rst.ua++${encodeURIComponent(query)}`;
-        } else {
-            // Ищет сразу по трем главным площадкам объявления о продаже
-            searchUrl = `https://www.google.com/search?q=(site:auto.ria.com+OR+site:rst.ua+OR+site:olx.ua)+prodam+${encodeURIComponent(query)}`;
-        }
-
-        // Открываем результаты в новой вкладке
+        if (platform === 'autoria') searchUrl = `https://www.google.com/search?q=site:auto.ria.com++${encodeURIComponent(query)}`;
+        else if (platform === 'olx') searchUrl = `https://www.google.com/search?q=site:olx.ua/d/uk/transport/legkovye-avtomobili/++${encodeURIComponent(query)}`;
+        else if (platform === 'rst') searchUrl = `https://www.google.com/search?q=site:rst.ua++${encodeURIComponent(query)}`;
+        else searchUrl = `https://www.google.com/search?q=(site:auto.ria.com+OR+site:rst.ua+OR+site:olx.ua)+prodam+${encodeURIComponent(query)}`;
         window.open(searchUrl, '_blank');
     }
 
-    // 3. Получение реальной погоды для Одессы
+    // Погода
     async function fetchWeather() {
         try {
             const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=46.4825&longitude=30.7233&current_weather=true');
@@ -184,14 +151,9 @@
             if(data && data.current_weather) {
                 document.getElementById('weather-temp').innerText = `${data.current_weather.temperature}°C`;
                 document.getElementById('weather-wind').innerText = `${data.current_weather.windspeed} км/ч`;
-                document.getElementById('weather-desc').innerText = 'Синхронизировано';
             }
-        } catch (e) {
-            document.getElementById('weather-temp').innerText = 'Ошибка API';
-        }
+        } catch (e) { document.getElementById('weather-temp').innerText = 'Ошибка API'; }
     }
-
-    window.onload = () => { fetchWeather(); }
 </script>
 </body>
 </html>
