@@ -3,322 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COMMAND_CENTER_v4.0</title>
+    <title>LIVE_CORE_PANEL_v4.5</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
     <style>
         :root {
-            --bg: #050508;
-            --panel: #0d0e15;
-            --border: #1f2235;
-            --accent: #a855f7; /* Фиолетовый неон */
-            --cyan: #06b6d4;   /* Циан неон */
+            --bg: #06070d;
+            --panel: #0b0c16;
+            --border: #1b1d36;
+            --accent: #a855f7; 
+            --cyan: #06b6d4;   
             --text: #e2e8f0;
-            --muted: #64748b;
+            --muted: #475569;
+            --success: #10b981;
         }
 
         * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
-        
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .wrapper {
-            max-width: 1300px;
-            margin: 0 auto;
-        }
+        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .wrapper { max-width: 1200px; margin: 0 auto; }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 20px;
+            padding-bottom: 15px;
             border-bottom: 1px solid var(--border);
             margin-bottom: 25px;
         }
 
         .title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
             background: linear-gradient(90deg, var(--cyan), var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-title {
-            font-size: 14px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: var(--cyan);
-            margin-top: 0;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Инпуты и кнопки */
-        input, select {
-            background: #131524;
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            width: 100%;
-        }
-        input:focus { outline: none; border-color: var(--cyan); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+        .panel-title { font-size: 13px; text-transform: uppercase; font-weight: 700; color: var(--cyan); margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px; }
+        
+        .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
+        .data-label { color: #94a3b8; }
+        .data-value { font-weight: 500; color: #fff; }
 
         .btn {
             background: linear-gradient(90deg, var(--cyan), var(--accent));
-            color: #000;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-weight: 700;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-size: 12px;
-            transition: opacity 0.2s;
+            color: #000; border: none; padding: 12px; border-radius: 6px;
+            font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 12px;
+            transition: all 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+            text-decoration: none;
         }
-        .btn:hover { opacity: 0.9; }
+        .btn:hover { opacity: 0.9; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); }
 
-        /* Карта */
-        #map {
-            height: 180px;
-            border-radius: 8px;
-            margin-top: 10px;
-            border: 1px solid var(--border);
-            z-index: 1;
+        /* Пульсирующая точка онлайна */
+        .pulse-dot {
+            width: 8px; height: 8px; background: var(--success); border-radius: 50%;
+            display: inline-block; box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
         }
-
-        /* Хэши */
-        .hash-output {
-            background: #050508;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            word-break: break-all;
-            margin-top: 5px;
-            border: 1px solid var(--border);
-            color: #a855f7;
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
-
-        /* Todo лист */
-        .todo-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
-        .todo-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px;
-            background: #131524;
-            margin-bottom: 5px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .todo-item.done { text-decoration: line-through; color: var(--muted); opacity: 0.6; }
-
-        /* Сниппеты */
-        .snippet {
-            background: #050508;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            position: relative;
-            margin-bottom: 10px;
-            border: 1px solid var(--border);
-        }
-        .copy-icon {
-            position: absolute;
-            right: 10px;
-            top: 10px;
-            cursor: pointer;
-            color: var(--muted);
-        }
-        .copy-icon:hover { color: var(--cyan); }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
     <header>
-        <div class="title">// CONTROL_PANEL_v4 //</div>
-        <div style="font-size: 12px; color: var(--muted);" id="clock">00:00:00</div>
+        <div class="title">// MISSION_CONTROL_LIVE //</div>
+        <div style="font-size: 12px; color: #94a3b8;" id="clock">Загрузка системы...</div>
     </header>
 
     <div class="grid">
         <div class="panel">
-            <div class="panel-title"><i class="fa-solid fa-satellite-dish"></i> IP Target Geolocator</div>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="ipInput" placeholder="Введите IP (например, 8.8.8.8)">
-                <button class="btn" onclick="geoLocate()">Scan</button>
+            <div>
+                <div class="panel-title"><i class="fa-solid fa-cloud-sun"></i> Weather_Meteo / Odesa</div>
+                <div class="data-row">
+                    <span class="data-label">Температура:</span>
+                    <span class="data-value" id="weather-temp">Загрузка...</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Статус:</span>
+                    <span class="data-value" id="weather-desc">-</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Ветер:</span>
+                    <span class="data-value" id="weather-wind">-</span>
+                </div>
             </div>
-            <div id="geoResult" style="font-size: 12px; color: var(--muted); line-height: 1.5;">
-                Ожидание ввода...
-            </div>
-            <div id="map"></div>
+            <div style="font-size: 10px; color: var(--muted); margin-top: 15px;">Данные обновляются в реальном времени</div>
         </div>
 
         <div class="panel">
-            <div class="panel-title"><i class="fa-solid fa-key"></i> Crypto Hash Generator</div>
-            <input type="text" id="hashInput" placeholder="Введите текст для шифрования..." oninput="generateHashes()">
-            
-            <div style="margin-top: 5px;">
-                <span style="font-size: 11px; color: var(--muted);">MD5:</span>
-                <div class="hash-output" id="md5Out">-</div>
+            <div>
+                <div class="panel-title"><i class="fa-solid fa-chart-line"></i> Financial_Rates</div>
+                <div class="data-row">
+                    <span class="data-label">USD / UAH:</span>
+                    <span class="data-value" id="rate-usd">41.20 ₴</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">EUR / UAH:</span>
+                    <span class="data-value" id="rate-eur">44.50 ₴</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Bitcoin:</span>
+                    <span class="data-value" style="color: #f59e0b;" id="rate-btc">Loading...</span>
+                </div>
             </div>
-            <div style="margin-top: 10px;">
-                <span style="font-size: 11px; color: var(--muted);">SHA-256:</span>
-                <div class="hash-output" id="sha256Out">-</div>
-            </div>
+            <div style="font-size: 10px; color: var(--muted); margin-top: 15px;">Глобальный маркет-фид</div>
         </div>
 
-        <div class="panel">
-            <div class="panel-title"><i class="fa-solid fa-list-check"></i> Mission Todo List</div>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="todoInput" placeholder="Новая задача...">
-                <button class="btn" onclick="addTodo()">+</button>
+        <div class="panel" style="background: linear-gradient(135deg, #0b0c16 0%, #0f112a 100%);">
+            <div>
+                <div class="panel-title" style="color: #24a1de;"><i class="fa-brands fa-telegram"></i> Telegram_Link</div>
+                <p style="font-size: 12px; color: #94a3b8; line-height: 1.6; margin-top: 0;">
+                    Панель сопряжения с вашим ботом. Используйте для быстрого перехода в интерфейс управления скриптами.
+                </p>
+                <div class="data-row" style="border: none; margin-bottom: 15px;">
+                    <span class="data-label">Статус соединения:</span>
+                    <span class="data-value" style="color: var(--success); display: flex; align-items: center; gap: 6px;">
+                        <span class="pulse-dot"></span> READY
+                    </span>
+                </div>
             </div>
-            <ul class="todo-list" id="todoList"></ul>
-        </div>
-
-        <div class="panel">
-            <div class="panel-title"><i class="fa-solid fa-code"></i> Quick Dev Snippets</div>
-            
-            <div class="snippet">
-                <i class="fa-regular fa-copy copy-icon" onclick="copySnippet('export PYTHONPATH=$PYTHONPATH:.')"></i>
-                <code>export PYTHONPATH=$PYTHONPATH:.</code>
-            </div>
-
-            <div class="snippet">
-                <i class="fa-regular fa-copy copy-icon" onclick="copySnippet('source venv/bin/activate')"></i>
-                <code>source venv/bin/activate</code>
-            </div>
-
-            <div class="snippet">
-                <i class="fa-regular fa-copy copy-icon" onclick="copySnippet('python3 -m bot.main')"></i>
-                <code>python3 -m bot.main</code>
-            </div>
+            <a href="https://t.me/YOUR_BOT_USERNAME?start=hub_site" target="_blank" style="text-decoration: none;">
+                <button class="btn" style="background: #24a1de; color: #fff;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть бота
+                </button>
+            </a>
         </div>
     </div>
 </div>
 
 <script>
-    // 1. Время
+    // 1. Живые часы
     setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('ru-RU');
+        const d = new Date();
+        document.getElementById('clock').innerText = d.toLocaleString('ru-RU') + ' // SYS_OK';
     }, 1000);
 
-    // 2. Хэш генератор
-    function generateHashes() {
-        const val = document.getElementById('hashInput').value;
-        if(!val) {
-            document.getElementById('md5Out').innerText = '-';
-            document.getElementById('sha256Out').innerText = '-';
-            return;
-        }
-        document.getElementById('md5Out').innerText = CryptoJS.MD5(val).toString();
-        document.getElementById('sha256Out').innerText = CryptoJS.SHA256(val).toString();
-    }
-
-    // 3. Карта и Геолокация
-    let map = L.map('map').setView([46.4825, 30.7233], 10); // По умолчанию Одесса
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map); // Темная карта
-
-    async function geoLocate() {
-        const ip = document.getElementById('ipInput').value;
-        if(!ip) return alert('Введите IP');
-        
+    // 2. Получение реальной погоды для Одессы (Бесплатное API без ключей)
+    async function fetchWeather() {
         try {
-            const res = await fetch(`https://ipapi.co/${ip}/json/`);
+            // Координаты Одессы: 46.4825, 30.7233
+            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=46.4825&longitude=30.7233&current_weather=true');
             const data = await res.json();
-            
-            if(data.error) {
-                document.getElementById('geoResult').innerText = 'Ошибка: Неверный IP';
-                return;
+            if(data && data.current_weather) {
+                const temp = data.current_weather.temperature;
+                const wind = data.current_weather.windspeed;
+                document.getElementById('weather-temp').innerText = `${temp}°C`;
+                document.getElementById('weather-wind').innerText = `${wind} км/ч`;
+                document.getElementById('weather-desc').innerText = 'Синхронизировано';
             }
-
-            document.getElementById('geoResult').innerHTML = `
-                <b>Провайдер:</b> ${data.org}<br>
-                <b>Локация:</b> ${data.city}, ${data.country_name}<br>
-                <b>Координаты:</b> ${data.latitude}, ${data.longitude}
-            `;
-
-            map.setView([data.latitude, data.longitude], 12);
-            L.marker([data.latitude, data.longitude]).addTo(map);
         } catch (e) {
-            document.getElementById('geoResult').innerText = 'Ошибка запроса к API.';
+            document.getElementById('weather-temp').innerText = 'Ошибка API';
         }
     }
 
-    // 4. Todo лист с сохранением
-    let todos = JSON.parse(localStorage.getItem('center_todos')) || [
-        { text: 'Запустить бота и проверить логи', done: false },
-        { text: 'Тренировка: отжимания (цель 70кг)', done: false }
-    ];
-
-    function renderTodos() {
-        const ul = document.getElementById('todoList');
-        ul.innerHTML = '';
-        todos.forEach((todo, index) => {
-            const li = document.createElement('li');
-            li.className = `todo-item ${todo.done ? 'done' : ''}`;
-            li.innerText = todo.text;
-            li.onclick = () => {
-                todos[index].done = !todos[index].done;
-                saveTodos();
-            };
-            ul.appendChild(li);
-        });
+    // 3. Получение курса криптовалюты (Bitcoin)
+    async function fetchCrypto() {
+        try {
+            const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+            const data = await res.json();
+            if(data && data.bitcoin) {
+                const btcPrice = data.bitcoin.usd.toLocaleString('en-US');
+                document.getElementById('rate-btc').innerText = `$${btcPrice}`;
+            }
+        } catch (e) {
+            document.getElementById('rate-btc').innerText = 'Офлайн';
+        }
     }
 
-    function addTodo() {
-        const input = document.getElementById('todoInput');
-        if(!input.value) return;
-        todos.push({ text: input.value, done: false });
-        input.value = '';
-        saveTodos();
+    // Запускаем загрузку данных при открытии страницы
+    window.onload = () => {
+        fetchWeather();
+        fetchCrypto();
+        // Обновляем погоду каждые 10 минут, крипту каждые 2 минуты
+        setInterval(fetchWeather, 600000);
+        setInterval(fetchCrypto, 120000);
     }
-
-    function saveTodos() {
-        localStorage.setItem('center_todos', JSON.stringify(todos));
-        renderTodos();
-    }
-
-    // 5. Копирование сниппетов
-    function copySnippet(text) {
-        navigator.clipboard.writeText(text);
-        alert('Скопировано в буфер: ' + text);
-    }
-
-    window.onload = () => { renderTodos(); }
 </script>
 </body>
 </html>
