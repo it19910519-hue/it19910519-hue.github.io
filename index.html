@@ -3,304 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORE_INTERFACE_v3.2</title>
+    <title>COMMAND_CENTER_v4.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
     <style>
         :root {
-            /* Палитра в стиле современного киберпанка */
-            --bg-color: #030712;
-            --panel-bg: rgba(17, 24, 39, 0.7);
-            --border-color: rgba(56, 189, 248, 0.15);
-            --accent-primary: #38bdf8; /* Синий */
-            --accent-secondary: #a855f7; /* Фиолетовый */
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --status-ok: #4ade80;
+            --bg: #050508;
+            --panel: #0d0e15;
+            --border: #1f2235;
+            --accent: #a855f7; /* Фиолетовый неон */
+            --cyan: #06b6d4;   /* Циан неон */
+            --text: #e2e8f0;
+            --muted: #64748b;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
+        
         body {
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(at 10% 10%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
-                radial-gradient(at 90% 90%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
             padding: 20px;
-            display: flex;
-            justify-content: center;
             min-height: 100vh;
         }
 
-        .main-container {
-            width: 100%;
-            max-width: 1200px;
+        .wrapper {
+            max-width: 1300px;
+            margin: 0 auto;
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 0 20px 0;
-            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 25px;
         }
 
-        .logo {
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        .title {
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: linear-gradient(90deg, var(--cyan), var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .system-status {
-            font-size: 13px;
-            color: var(--text-muted);
-            background: rgba(255,255,255,0.03);
-            padding: 5px 15px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .grid-layout {
+        .grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
 
-        @media (max-width: 900px) {
-            .grid-layout { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
 
-        /* Стиль панелей "матовое стекло" */
         .panel {
-            background-color: var(--panel-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color);
+            background: var(--panel);
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .panel::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 2px;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            opacity: 0.5;
-        }
-
-        .panel-header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-direction: column;
         }
 
         .panel-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-main);
+            font-size: 14px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--cyan);
+            margin-top: 0;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
-        .panel-icon { color: var(--accent-primary); }
+        /* Инпуты и кнопки */
+        input, select {
+            background: #131524;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        input:focus { outline: none; border-color: var(--cyan); }
 
-        /* Мониторинг процессов */
-        .process-list { display: flex; flex-direction: column; gap: 10px; }
-        
-        .process-item {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.03);
-            padding: 12px 15px;
+        .btn {
+            background: linear-gradient(90deg, var(--cyan), var(--accent));
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+
+        /* Карта */
+        #map {
+            height: 180px;
             border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
+            z-index: 1;
+        }
+
+        /* Хэши */
+        .hash-output {
+            background: #050508;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            word-break: break-all;
+            margin-top: 5px;
+            border: 1px solid var(--border);
+            color: #a855f7;
+        }
+
+        /* Todo лист */
+        .todo-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
+        .todo-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s ease;
-        }
-
-        .process-item:hover { border-color: rgba(56, 189, 248, 0.3); background: rgba(255,255,255,0.04); }
-
-        .proc-info { display: flex; align-items: center; gap: 10px; }
-        .proc-name { font-weight: 500; font-size: 14px; }
-        .proc-meta { color: var(--text-muted); font-size: 12px; }
-
-        .status-badge {
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: 600;
-            padding: 3px 8px;
+            padding: 8px;
+            background: #131524;
+            margin-bottom: 5px;
             border-radius: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .status-badge.online { background: rgba(74, 222, 128, 0.1); color: var(--status-ok); }
-        .status-badge.idle { background: rgba(148, 163, 184, 0.1); color: var(--text-muted); }
-
-        /* Заметки */
-        textarea {
-            width: 100%;
-            height: 150px;
-            background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
-            color: var(--text-main);
-            padding: 10px;
-            font-family: inherit;
-            font-size: 13px;
-            resize: none;
-            margin-bottom: 10px;
-        }
-        textarea:focus { outline: none; border-color: rgba(56, 189, 248, 0.4); }
-
-        .btn-modern {
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.2s ease;
+            font-size: 13px;
         }
-        .btn-modern:hover { opacity: 0.9; }
+        .todo-item.done { text-decoration: line-through; color: var(--muted); opacity: 0.6; }
 
-        /* Метрики */
-        .metric-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
-        .metric-label { color: var(--text-muted); }
-        .metric-value { font-weight: 500; }
-        
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 3px;
-            margin-top: 10px;
-            overflow: hidden;
+        /* Сниппеты */
+        .snippet {
+            background: #050508;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            position: relative;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
         }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            width: 65%; /* Пример прогресса до 70кг */
+        .copy-icon {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            cursor: pointer;
+            color: var(--muted);
         }
+        .copy-icon:hover { color: var(--cyan); }
     </style>
 </head>
 <body>
 
-<div class="main-container">
+<div class="wrapper">
     <header>
-        <div class="logo">core_env / it19910519-hue</div>
-        <div class="system-status" id="sysClock">00:00:00 // STATUS: OK</div>
+        <div class="title">// CONTROL_PANEL_v4 //</div>
+        <div style="font-size: 12px; color: var(--muted);" id="clock">00:00:00</div>
     </header>
 
-    <div class="grid-layout">
+    <div class="grid">
         <div class="panel">
-            <div class="panel-header">
-                <div class="panel-title"><i class="fa-solid fa-server panel-icon"></i>Активные сервисы</div>
-                <div class="proc-meta">3 Модуля</div>
+            <div class="panel-title"><i class="fa-solid fa-satellite-dish"></i> IP Target Geolocator</div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="ipInput" placeholder="Введите IP (например, 8.8.8.8)">
+                <button class="btn" onclick="geoLocate()">Scan</button>
             </div>
+            <div id="geoResult" style="font-size: 12px; color: var(--muted); line-height: 1.5;">
+                Ожидание ввода...
+            </div>
+            <div id="map"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title"><i class="fa-solid fa-key"></i> Crypto Hash Generator</div>
+            <input type="text" id="hashInput" placeholder="Введите текст для шифрования..." oninput="generateHashes()">
             
-            <div class="process-list">
-                <div class="process-item">
-                    <div class="proc-info">
-                        <i class="fa-solid fa-robot" style="color:var(--accent-secondary);"></i>
-                        <div>
-                            <div class="proc-name">AXIOMA-09_bot</div>
-                            <div class="proc-meta">Python v3.10 / core_instance</div>
-                        </div>
-                    </div>
-                    <span class="status-badge online"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Active</span>
-                </div>
-
-                <div class="process-item">
-                    <div class="proc-info">
-                        <i class="fa-solid fa-network-wired" style="color:var(--accent-primary);"></i>
-                        <div>
-                            <div class="proc-name">Local_Dev_Server</div>
-                            <div class="proc-meta">localhost:8080</div>
-                        </div>
-                    </div>
-                    <span class="status-badge online"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Online</span>
-                </div>
-
-                <div class="process-item">
-                    <div class="proc-info">
-                        <i class="fa-solid fa-code-branch" style="color:var(--text-muted);"></i>
-                        <div>
-                            <div class="proc-name">Courier_App_Dev</div>
-                            <div class="proc-meta">Phase: Prototyping</div>
-                        </div>
-                    </div>
-                    <span class="status-badge idle">Standby</span>
-                </div>
+            <div style="margin-top: 5px;">
+                <span style="font-size: 11px; color: var(--muted);">MD5:</span>
+                <div class="hash-output" id="md5Out">-</div>
+            </div>
+            <div style="margin-top: 10px;">
+                <span style="font-size: 11px; color: var(--muted);">SHA-256:</span>
+                <div class="hash-output" id="sha256Out">-</div>
             </div>
         </div>
 
-        <div class="right-stack" style="display:flex; flex-direction:column; gap:20px;">
-            <div class="panel">
-                <div class="panel-header">
-                    <div class="panel-title"><i class="fa-solid fa-pen-nib panel-icon"></i>Dev_Notes</div>
-                </div>
-                <textarea id="notesArea" placeholder="Вставьте код или заметки... Данные сохраняются в браузере."></textarea>
-                <div style="text-align: right;">
-                    <button class="btn-modern" onclick="saveNotes()">Сохранить</button>
-                </div>
+        <div class="panel">
+            <div class="panel-title"><i class="fa-solid fa-list-check"></i> Mission Todo List</div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="todoInput" placeholder="Новая задача...">
+                <button class="btn" onclick="addTodo()">+</button>
+            </div>
+            <ul class="todo-list" id="todoList"></ul>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title"><i class="fa-solid fa-code"></i> Quick Dev Snippets</div>
+            
+            <div class="snippet">
+                <i class="fa-regular fa-copy copy-icon" onclick="copySnippet('export PYTHONPATH=$PYTHONPATH:.')"></i>
+                <code>export PYTHONPATH=$PYTHONPATH:.</code>
             </div>
 
-            <div class="panel">
-                <div class="panel-header">
-                    <div class="panel-title"><i class="fa-solid fa-target-arrow panel-icon"></i>Цели</div>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Текущий вес</span>
-                    <span class="metric-value">65 kg</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Целевой вес</span>
-                    <span class="metric-value">70 kg</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill"></div>
-                </div>
-                <div class="proc-meta" style="text-align:center; margin-top:5px;">Прогресс: +5 kg до цели</div>
+            <div class="snippet">
+                <i class="fa-regular fa-copy copy-icon" onclick="copySnippet('source venv/bin/activate')"></i>
+                <code>source venv/bin/activate</code>
+            </div>
+
+            <div class="snippet">
+                <i class="fa-regular fa-copy copy-icon" onclick="copySnippet('python3 -m bot.main')"></i>
+                <code>python3 -m bot.main</code>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Часы и дата
-    function updateClock() {
-        const d = new Date();
-        const timeStr = d.toLocaleTimeString('ru-RU');
-        document.getElementById('sysClock').innerText = `${timeStr} // STATUS: OK`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    // 1. Время
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('ru-RU');
+    }, 1000);
 
-    // Загрузка и сохранение заметок в LocalStorage
-    window.onload = function() {
-        if(localStorage.getItem('core_v3_notes')) {
-            document.getElementById('notesArea').value = localStorage.getItem('core_v3_notes');
+    // 2. Хэш генератор
+    function generateHashes() {
+        const val = document.getElementById('hashInput').value;
+        if(!val) {
+            document.getElementById('md5Out').innerText = '-';
+            document.getElementById('sha256Out').innerText = '-';
+            return;
+        }
+        document.getElementById('md5Out').innerText = CryptoJS.MD5(val).toString();
+        document.getElementById('sha256Out').innerText = CryptoJS.SHA256(val).toString();
+    }
+
+    // 3. Карта и Геолокация
+    let map = L.map('map').setView([46.4825, 30.7233], 10); // По умолчанию Одесса
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map); // Темная карта
+
+    async function geoLocate() {
+        const ip = document.getElementById('ipInput').value;
+        if(!ip) return alert('Введите IP');
+        
+        try {
+            const res = await fetch(`https://ipapi.co/${ip}/json/`);
+            const data = await res.json();
+            
+            if(data.error) {
+                document.getElementById('geoResult').innerText = 'Ошибка: Неверный IP';
+                return;
+            }
+
+            document.getElementById('geoResult').innerHTML = `
+                <b>Провайдер:</b> ${data.org}<br>
+                <b>Локация:</b> ${data.city}, ${data.country_name}<br>
+                <b>Координаты:</b> ${data.latitude}, ${data.longitude}
+            `;
+
+            map.setView([data.latitude, data.longitude], 12);
+            L.marker([data.latitude, data.longitude]).addTo(map);
+        } catch (e) {
+            document.getElementById('geoResult').innerText = 'Ошибка запроса к API.';
         }
     }
-    function saveNotes() {
-        const text = document.getElementById('notesArea').value;
-        localStorage.setItem('core_v3_notes', text);
-        alert('Заметки сохранены!');
+
+    // 4. Todo лист с сохранением
+    let todos = JSON.parse(localStorage.getItem('center_todos')) || [
+        { text: 'Запустить бота и проверить логи', done: false },
+        { text: 'Тренировка: отжимания (цель 70кг)', done: false }
+    ];
+
+    function renderTodos() {
+        const ul = document.getElementById('todoList');
+        ul.innerHTML = '';
+        todos.forEach((todo, index) => {
+            const li = document.createElement('li');
+            li.className = `todo-item ${todo.done ? 'done' : ''}`;
+            li.innerText = todo.text;
+            li.onclick = () => {
+                todos[index].done = !todos[index].done;
+                saveTodos();
+            };
+            ul.appendChild(li);
+        });
     }
+
+    function addTodo() {
+        const input = document.getElementById('todoInput');
+        if(!input.value) return;
+        todos.push({ text: input.value, done: false });
+        input.value = '';
+        saveTodos();
+    }
+
+    function saveTodos() {
+        localStorage.setItem('center_todos', JSON.stringify(todos));
+        renderTodos();
+    }
+
+    // 5. Копирование сниппетов
+    function copySnippet(text) {
+        navigator.clipboard.writeText(text);
+        alert('Скопировано в буфер: ' + text);
+    }
+
+    window.onload = () => { renderTodos(); }
 </script>
 </body>
 </html>
