@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIVE_CORE_PANEL_v4.5</title>
+    <title>LIVE_CORE_PANEL_v5.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -47,16 +47,26 @@
         .data-label { color: #94a3b8; }
         .data-value { font-weight: 500; color: #fff; }
 
+        input, select {
+            background: #131524;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            width: 100%;
+            font-size: 13px;
+        }
+        input:focus { outline: none; border-color: var(--cyan); }
+
         .btn {
             background: linear-gradient(90deg, var(--cyan), var(--accent));
             color: #000; border: none; padding: 12px; border-radius: 6px;
             font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 12px;
             transition: all 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-            text-decoration: none;
         }
         .btn:hover { opacity: 0.9; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); }
 
-        /* Пульсирующая точка онлайна */
         .pulse-dot {
             width: 8px; height: 8px; background: var(--success); border-radius: 50%;
             display: inline-block; box-shadow: 0 0 8px var(--success);
@@ -74,10 +84,27 @@
 <div class="wrapper">
     <header>
         <div class="title">// MISSION_CONTROL_LIVE //</div>
-        <div style="font-size: 12px; color: #94a3b8;" id="clock">Загрузка системы...</div>
+        <div style="font-size: 12px; color: #94a3b8;" id="clock">Синхронизация...</div>
     </header>
 
     <div class="grid">
+        <div class="panel">
+            <div>
+                <div class="panel-title"><i class="fa-solid fa-car-sidebar"></i> Auto_Crawler / Поиск объявлений</div>
+                <input type="text" id="carQuery" placeholder="Например: Subaru Legacy 2007">
+                
+                <select id="searchPlatform">
+                    <option value="all">Искать по всем автосайтам Украины</option>
+                    <option value="autoria">Только на Auto.ria</option>
+                    <option value="olx">Только на OLX Авто</option>
+                    <option value="rst">Только на RST</option>
+                </select>
+            </div>
+            <button class="btn" onclick="executeAutoSearch()">
+                <i class="fa-solid fa-magnifying-glass"></i> Запустить глобальный поиск
+            </button>
+        </div>
+
         <div class="panel">
             <div>
                 <div class="panel-title"><i class="fa-solid fa-cloud-sun"></i> Weather_Meteo / Odesa</div>
@@ -87,33 +114,14 @@
                 </div>
                 <div class="data-row">
                     <span class="data-label">Статус:</span>
-                    <span class="data-value" id="weather-desc">-</span>
+                    <span class="data-value" id="weather-desc">Синхронизация</span>
                 </div>
                 <div class="data-row">
                     <span class="data-label">Ветер:</span>
                     <span class="data-value" id="weather-wind">-</span>
                 </div>
             </div>
-            <div style="font-size: 10px; color: var(--muted); margin-top: 15px;">Данные обновляются в реальном времени</div>
-        </div>
-
-        <div class="panel">
-            <div>
-                <div class="panel-title"><i class="fa-solid fa-chart-line"></i> Financial_Rates</div>
-                <div class="data-row">
-                    <span class="data-label">USD / UAH:</span>
-                    <span class="data-value" id="rate-usd">41.20 ₴</span>
-                </div>
-                <div class="data-row">
-                    <span class="data-label">EUR / UAH:</span>
-                    <span class="data-value" id="rate-eur">44.50 ₴</span>
-                </div>
-                <div class="data-row">
-                    <span class="data-label">Bitcoin:</span>
-                    <span class="data-value" style="color: #f59e0b;" id="rate-btc">Loading...</span>
-                </div>
-            </div>
-            <div style="font-size: 10px; color: var(--muted); margin-top: 15px;">Глобальный маркет-фид</div>
+            <div style="font-size: 10px; color: var(--muted); margin-top: 15px;">Гео-координаты зафиксированы</div>
         </div>
 
         <div class="panel" style="background: linear-gradient(135deg, #0b0c16 0%, #0f112a 100%);">
@@ -141,21 +149,41 @@
 <script>
     // 1. Живые часы
     setInterval(() => {
-        const d = new Date();
-        document.getElementById('clock').innerText = d.toLocaleString('ru-RU') + ' // SYS_OK';
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('ru-RU') + ' // SYS_OK';
     }, 1000);
 
-    // 2. Получение реальной погоды для Одессы (Бесплатное API без ключей)
+    // 2. Логика умного поиска машин
+    function executeAutoSearch() {
+        const query = document.getElementById('carQuery').value.trim();
+        if (!query) return alert('Введите марку автомобиля или запрос!');
+
+        const platform = document.getElementById('searchPlatform').value;
+        let searchUrl = '';
+
+        // Хак с оператором site: для точечного сбора объявлений без мусора
+        if (platform === 'autoria') {
+            searchUrl = `https://www.google.com/search?q=site:auto.ria.com++${encodeURIComponent(query)}`;
+        } else if (platform === 'olx') {
+            searchUrl = `https://www.google.com/search?q=site:olx.ua/d/uk/transport/legkovye-avtomobili/++${encodeURIComponent(query)}`;
+        } else if (platform === 'rst') {
+            searchUrl = `https://www.google.com/search?q=site:rst.ua++${encodeURIComponent(query)}`;
+        } else {
+            // Ищет сразу по трем главным площадкам объявления о продаже
+            searchUrl = `https://www.google.com/search?q=(site:auto.ria.com+OR+site:rst.ua+OR+site:olx.ua)+prodam+${encodeURIComponent(query)}`;
+        }
+
+        // Открываем результаты в новой вкладке
+        window.open(searchUrl, '_blank');
+    }
+
+    // 3. Получение реальной погоды для Одессы
     async function fetchWeather() {
         try {
-            // Координаты Одессы: 46.4825, 30.7233
             const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=46.4825&longitude=30.7233&current_weather=true');
             const data = await res.json();
             if(data && data.current_weather) {
-                const temp = data.current_weather.temperature;
-                const wind = data.current_weather.windspeed;
-                document.getElementById('weather-temp').innerText = `${temp}°C`;
-                document.getElementById('weather-wind').innerText = `${wind} км/ч`;
+                document.getElementById('weather-temp').innerText = `${data.current_weather.temperature}°C`;
+                document.getElementById('weather-wind').innerText = `${data.current_weather.windspeed} км/ч`;
                 document.getElementById('weather-desc').innerText = 'Синхронизировано';
             }
         } catch (e) {
@@ -163,28 +191,7 @@
         }
     }
 
-    // 3. Получение курса криптовалюты (Bitcoin)
-    async function fetchCrypto() {
-        try {
-            const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
-            const data = await res.json();
-            if(data && data.bitcoin) {
-                const btcPrice = data.bitcoin.usd.toLocaleString('en-US');
-                document.getElementById('rate-btc').innerText = `$${btcPrice}`;
-            }
-        } catch (e) {
-            document.getElementById('rate-btc').innerText = 'Офлайн';
-        }
-    }
-
-    // Запускаем загрузку данных при открытии страницы
-    window.onload = () => {
-        fetchWeather();
-        fetchCrypto();
-        // Обновляем погоду каждые 10 минут, крипту каждые 2 минуты
-        setInterval(fetchWeather, 600000);
-        setInterval(fetchCrypto, 120000);
-    }
+    window.onload = () => { fetchWeather(); }
 </script>
 </body>
 </html>
