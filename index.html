@@ -66,6 +66,7 @@
     </header>
 
     <div class="grid">
+        <!-- ПАНЕЛЬ УПРАВЛЕНИЯ БОТОМ -->
         <div class="panel" style="border-color: var(--accent);">
             <div>
                 <div class="panel-title" style="color: var(--accent);"><i class="fa-solid fa-user-ninja"></i> Target_Controller / Юзербот</div>
@@ -113,7 +114,6 @@
             document.getElementById('lock-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             fetchWeather();
-            // Загружаем текущую цель из локальной памяти браузера
             const savedTarget = localStorage.getItem('bot_target') || '@Love_12350';
             document.getElementById('currentTarget').innerText = savedTarget;
         } else {
@@ -129,8 +129,8 @@
         localStorage.setItem('bot_target', newTarget);
         document.getElementById('currentTarget').innerText = newTarget;
         
-        // Открываем Telegram, чтобы передать команду боту в один клик
-        const botUsername = "YOUR_BOT_USERNAME"; // Тут будет ник твоего главного бота
+        // Передаем команду напрямую твоему основному боту Axioma09
+        const botUsername = "Axioma09_bot"; 
         window.open(`https://t.me/${botUsername}?start=set_${newTarget.replace('@', '')}`, '_blank');
     }
 
