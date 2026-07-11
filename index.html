@@ -44,6 +44,8 @@
         .btn:hover { opacity: 0.9; box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); }
         .pulse-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        
+        .cmd-box { background: #131524; border: 1px solid #2d3154; border-radius: 6px; padding: 10px; font-size: 12px; color: var(--cyan); margin: 10px 0; word-break: break-all; display: none; text-align: center; }
     </style>
 </head>
 <body>
@@ -66,15 +68,17 @@
     </header>
 
     <div class="grid">
-        <!-- ПАНЕЛЬ УПРАВЛЕНИЯ БОТОМ -->
         <div class="panel" style="border-color: var(--accent);">
             <div>
                 <div class="panel-title" style="color: var(--accent);"><i class="fa-solid fa-user-ninja"></i> Target_Controller / Юзербот</div>
-                <input type="text" id="targetInput" placeholder="Ник (например, @Love_12350) или телефон">
+                <input type="text" id="targetInput" placeholder="Ник (например, @Love_12350)" oninput="generateCommand()">
+                
+                <div id="cmdDisplay" class="cmd-box"></div>
+                
                 <div class="data-row"><span class="data-label">Текущая цель:</span><span class="data-value" id="currentTarget">Не задана</span></div>
             </div>
-            <button class="btn" onclick="updateTarget()" style="background: linear-gradient(90deg, var(--accent), #ec4899); color: white;">
-                <i class="fa-solid fa-crosshairs"></i> Установить цель
+            <button class="btn" id="actionBtn" onclick="copyAndOpen()" style="background: linear-gradient(90deg, var(--accent), #ec4899); color: white;">
+                <i class="fa-solid fa-copy"></i> Сгенерировать команду
             </button>
         </div>
 
@@ -122,16 +126,37 @@
         }
     }
 
-    function updateTarget() {
-        const newTarget = document.getElementById('targetInput').value.trim();
-        if (!newTarget) return alert('Введите ник или телефон!');
+    function generateCommand() {
+        const input = document.getElementById('targetInput').value.trim();
+        const cmdBox = document.getElementById('cmdDisplay');
+        const btn = document.getElementById('actionBtn');
         
-        localStorage.setItem('bot_target', newTarget);
-        document.getElementById('currentTarget').innerText = newTarget;
+        if(input) {
+            const cleanNick = input.replace('@', '');
+            cmdBox.innerText = `set_${cleanNick}`;
+            cmdBox.style.display = 'block';
+            btn.innerHTML = '<i class="fa-solid fa-copy"></i> Скопировать команду';
+        } else {
+            cmdBox.style.display = 'none';
+            btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Установить цель';
+        }
+    }
+
+    function copyAndOpen() {
+        const input = document.getElementById('targetInput').value.trim();
+        if (!input) return alert('Введите ник цели!');
         
-        // Передаем команду напрямую твоему основному боту Axioma09
-        const botUsername = "Axioma09_bot"; 
-        window.open(`https://t.me/${botUsername}?start=set_${newTarget.replace('@', '')}`, '_blank');
+        const cleanNick = input.replace('@', '');
+        const commandText = `set_${cleanNick}`;
+        
+        // Копируем текст в буфер обмена
+        navigator.clipboard.writeText(commandText).then(() => {
+            localStorage.setItem('bot_target', input);
+            document.getElementById('currentTarget').innerText = input;
+            alert(`Команда "${commandText}" скопирована! Отправь её в чат бота или Избранное.`);
+            // Открываем Избранное в Telegram (me - это ссылка на твой личный чат Save Messages)
+            window.open('https://t.me/me', '_blank');
+        });
     }
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ru-RU') + ' // SYS_OK'; }, 1000);
